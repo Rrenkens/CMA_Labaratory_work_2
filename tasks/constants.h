@@ -6,8 +6,6 @@
 #include <iostream>
 #include <complex>
 
-typedef std::vector<std::vector<double>> Matrix;
-typedef std::vector<double> Vector;
 typedef std::complex<double> Base;
 
 const double EPS = 1E-9;
@@ -32,7 +30,7 @@ std::istream &operator>>(std::istream &in, std::vector<T> &data) {
 template<typename T>
 std::ostream &operator<<(std::ostream &out, const std::vector<std::vector<T>> &data) {
   for (const auto &el : data) {
-    out << el << std::endl;
+    out << el << "\n";
   }
   return out;
 }
