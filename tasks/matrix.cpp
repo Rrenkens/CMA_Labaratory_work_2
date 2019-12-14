@@ -4,6 +4,14 @@ Matrix CreateMatrix(size_t row, size_t col) {
   return Matrix(row, Vector(col));
 }
 
+Matrix CreateEMatrix(size_t row) {
+  Matrix temp(row, Vector(row, 0));
+  for (size_t cur_row = 0; cur_row < row; cur_row++) {
+    temp[cur_row][cur_row] = 1;
+  }
+  return temp;
+}
+
 Matrix operator*(const Matrix &lhs, const Matrix &rhs) {
   if (lhs.front().size() != rhs.size()) {
     throw std::invalid_argument("These matrices are not compatible");
@@ -62,7 +70,7 @@ double NormOfVector(const Vector &data) {
   return sqrt(norm);
 }
 
-Vector NormalizeVector(const Vector &data) {
+Vector VectorRotationWithEuclideanNorm(const Vector &data) {
   double norm = NormOfVector(data);
   Vector ans = data;
   if (norm < EPS) {
@@ -83,3 +91,27 @@ double NormOfMatrix(const Matrix &a) {
   }
   return sqrt(norm);
 }
+double BinPow(double a, int n) {
+  if (n == 0) {
+    return 1;
+  }
+  if (n % 2 == 1) {
+    return BinPow(a, n - 1) * a;
+  } else {
+    double b = BinPow(a, n / 2);
+    return b * b;
+  }
+}
+
+std::vector<std::vector<std::complex<double>>>
+MatrixToComplex(const Matrix &matrix) {
+  std::vector < std::vector < std::complex < double >>
+      > ret(matrix.size(), std::vector < std::complex < double >> (matrix.size()));
+  for (size_t row = 0; row < matrix.size(); row++) {
+    for (size_t col = 0; col < matrix.size(); col++) {
+      ret[row][col] = {matrix[row][col], 0};
+    }
+  }
+  return ret;
+}
+

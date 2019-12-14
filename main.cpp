@@ -3,10 +3,11 @@
 #include "tasks/qr_algorithm.h"
 #include <iomanip>
 
+
 int main() {
-  std::cout << std::fixed << std::setprecision(8);
-  Matrix matrix = CreateMatrix(4, 4);
+  std::cout << std::fixed << std::setprecision(9);
+  Matrix matrix = CreateMatrix(3, 3);
   std::cin >> matrix;
-  ReductionToHessenberg(matrix);
+  QRAlgorithm(matrix);
   return 0;
 }

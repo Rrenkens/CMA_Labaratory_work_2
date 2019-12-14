@@ -12,7 +12,7 @@ void FFT(std::vector<Base> &data, bool invert) {
   }
   FFT(data_0, invert), FFT(data_1, invert);
 
-  double ang = 2 * PI / n * (invert ? -1 : 1);
+  long double ang = 2 * PI / n * (invert ? -1 : 1);
   Base w(1), wn(cos(ang), sin(ang));
   for (int i = 0; i < n / 2; ++i) {
     data[i] = data_0[i] + w * data_1[i];
@@ -24,8 +24,8 @@ void FFT(std::vector<Base> &data, bool invert) {
   }
 }
 
-void Multiply(const std::vector<double> &first_pol,
-              std::vector<double> &second_pol, size_t cur_size) {
+void Multiply(const std::vector<long double> &first_pol,
+              std::vector<long double> &second_pol, size_t cur_size) {
   std::vector<Base> first_fft(first_pol.begin(), first_pol.end()),
       second_fft(second_pol.begin(), second_pol.end());
   size_t n = 1;
@@ -45,4 +45,15 @@ void Multiply(const std::vector<double> &first_pol,
   for (size_t i = 0; i < cur_size; i++) {
     second_pol[i] = first_fft[i].real();
   }
+}
+
+std::complex<double> RoundEigenValue(const std::complex<double> &value) {
+  return std::complex<double>{
+      static_cast<long long> (value.real() * ROUND_CONST_LL + 0.5) / ROUND_CONST_LD,
+      static_cast<long long> (value.imag() * ROUND_CONST_LL + 0.5) / ROUND_CONST_LD};
+}
+
+std::ostream &operator<<(std::ostream &out, const std::complex<double> &data) {
+out << data.real() << " + " << data.imag() << "i";
+return out;
 }
