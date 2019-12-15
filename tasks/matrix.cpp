@@ -62,7 +62,7 @@ Matrix TransposeMatrix(const Matrix &a) {
   return ret;
 }
 
-double NormOfVector(const Vector &data) {
+double EuclideanNormOfVector(const Vector &data) {
   double norm = 0;
   for (const auto &el : data) {
     norm += el * el;
@@ -71,9 +71,9 @@ double NormOfVector(const Vector &data) {
 }
 
 Vector VectorRotationWithEuclideanNorm(const Vector &data) {
-  double norm = NormOfVector(data);
+  double norm = EuclideanNormOfVector(data);
   Vector ans = data;
-  if (norm < EPS) {
+  if (fabs(norm) < EPS) {
     throw std::invalid_argument("Normalization of a vector with norm == 0");
   }
   for (auto &el : ans) {
@@ -82,35 +82,21 @@ Vector VectorRotationWithEuclideanNorm(const Vector &data) {
   return ans;
 }
 
-double NormOfMatrix(const Matrix &a) {
-  double norm = 0;
-  for (const auto &i:a) {
-    for (const auto &j:i) {
-      norm += j * j;
-    }
-  }
-  return sqrt(norm);
-}
-double BinPow(double a, int n) {
-  if (n == 0) {
-    return 1;
-  }
-  if (n % 2 == 1) {
-    return BinPow(a, n - 1) * a;
-  } else {
-    double b = BinPow(a, n / 2);
-    return b * b;
-  }
-}
-
 std::vector<std::vector<std::complex<double>>>
 MatrixToComplex(const Matrix &matrix) {
-  std::vector < std::vector < std::complex < double >>
-      > ret(matrix.size(), std::vector < std::complex < double >> (matrix.size()));
+  std::vector<std::vector<std::complex<double >>
+  > ret(matrix.size(), std::vector<std::complex<double >>(matrix.size()));
   for (size_t row = 0; row < matrix.size(); row++) {
     for (size_t col = 0; col < matrix.size(); col++) {
       ret[row][col] = {matrix[row][col], 0};
     }
+  }
+  return ret;
+}
+std::vector<std::complex<double>> VectorToComplex(const Vector &data) {
+  std::vector<std::complex<double>> ret(data.size());
+  for (size_t row = 0; row < data.size(); row++) {
+    ret[row] = {data[row], 0};
   }
   return ret;
 }

@@ -1,11 +1,11 @@
 #include "constants.h"
 
-void FFT(std::vector<Base> &data, bool invert) {
+void FFT(std::vector<Complex> &data, bool invert) {
   int n = data.size();
   if (n == 1) {
     return;
   }
-  std::vector<Base> data_0(n / 2), data_1(n / 2);
+  std::vector<Complex> data_0(n / 2), data_1(n / 2);
   for (int i = 0, j = 0; i < n; i += 2, ++j) {
     data_0[j] = data[i];
     data_1[j] = data[i + 1];
@@ -13,7 +13,7 @@ void FFT(std::vector<Base> &data, bool invert) {
   FFT(data_0, invert), FFT(data_1, invert);
 
   long double ang = 2 * PI / n * (invert ? -1 : 1);
-  Base w(1), wn(cos(ang), sin(ang));
+  Complex w(1), wn(cos(ang), sin(ang));
   for (int i = 0; i < n / 2; ++i) {
     data[i] = data_0[i] + w * data_1[i];
     data[i + n / 2] = data_0[i] - w * data_1[i];
@@ -26,7 +26,7 @@ void FFT(std::vector<Base> &data, bool invert) {
 
 void Multiply(const std::vector<long double> &first_pol,
               std::vector<long double> &second_pol, size_t cur_size) {
-  std::vector<Base> first_fft(first_pol.begin(), first_pol.end()),
+  std::vector<std::complex<double>> first_fft(first_pol.begin(), first_pol.end()),
       second_fft(second_pol.begin(), second_pol.end());
   size_t n = 1;
   while (n < std::max(first_pol.size(), second_pol.size())) {
@@ -54,6 +54,16 @@ std::complex<double> RoundEigenValue(const std::complex<double> &value) {
 }
 
 std::ostream &operator<<(std::ostream &out, const std::complex<double> &data) {
-out << data.real() << " + " << data.imag() << "i";
-return out;
+  out << data.real() << " + " << data.imag() << "i";
+  return out;
+}
+
+std::mt19937 rnd(time(nullptr));
+
+int GetRandomNum(size_t mod) {
+  return rnd() % (2 * mod) - mod;
+}
+
+int Sign(double value) {
+  return value >= 0 ? 1 : -1;
 }

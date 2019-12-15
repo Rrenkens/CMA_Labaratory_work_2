@@ -1,9 +1,6 @@
 #ifndef CMA_LABORATORY_WORK_2__QR_ALGORITHM_H_
 #define CMA_LABORATORY_WORK_2__QR_ALGORITHM_H_
-#include "constants.h"
-#include "matrix.h"
-#include <exception>
-#include <map>
+#include "../matrix.h"
 
 //Function for multiplying matrix blocks
 void MulBlockOfMatrix(Matrix &matrix, size_t start_row, size_t end_row,
@@ -43,7 +40,7 @@ Matrix ReductionToHessenberg(Matrix &matrix) {
     for (size_t row = col + 1, pos = 0; row < matrix.size(); row++, pos++) {
       w[pos] = matrix[row][col];
     }
-    w[0] = w[0] <= 0 ? w[0] - NormOfVector(w) : w[0] + NormOfVector(w);
+    w[0] = w[0] <= 0 ? w[0] - EuclideanNormOfVector(w) : w[0] + EuclideanNormOfVector(w);
     w = VectorRotationWithEuclideanNorm(w);
 
     Matrix H(matrix.size() - col - 1, Vector(matrix.size() - col - 1, 0));
@@ -59,6 +56,8 @@ Matrix ReductionToHessenberg(Matrix &matrix) {
       }
     }
 
+    //A^{i + 1} =   A_{i}        U_{i} * H
+    //            H * L_{i}    H * B_{i} * H
     MulBlockOfMatrix(matrix, 0, col + 1,
                      col + 1, matrix.size(), H, false, true);
     MulBlockOfMatrix(matrix, col + 1, matrix.size(),
@@ -75,7 +74,7 @@ Matrix ReductionToHessenberg(Matrix &matrix) {
 Matrix QrDecompos(Matrix &matrix) {
   Matrix Q = CreateEMatrix(matrix.size());
   for (int col = 0; col < (int) matrix.size() - 1; col++) {
-    if (matrix[col + 1][col] * matrix[col + 1][col] + matrix[col][col] * matrix[col][col] < DIF_EPS) {
+    if (matrix[col + 1][col] * matrix[col + 1][col] + matrix[col][col] * matrix[col][col] < DIF_EPS_QR) {
       continue;
     }
     double cos = matrix[col][col]
@@ -95,10 +94,10 @@ Matrix QrDecompos(Matrix &matrix) {
 }
 
 //Function for finding the eigenvalue of block 2x2
-std::vector<std::complex<double>> Eigenvalues(Matrix &matrix) {
-  std::vector<std::complex<double>> eigenvalues;
+std::vector<Complex> Eigenvalues(Matrix &matrix) {
+  std::vector<Complex> eigenvalues;
   for (size_t col = 0; col < matrix.size(); col++) {
-    if (col + 1 != matrix.size() && fabs(matrix[col + 1][col]) >= EPS) {
+    if (col + 1 != matrix.size() && fabs(matrix[col + 1][col]) >= EPS_QR) {
       double D = (matrix[col][col] + matrix[col + 1][col + 1]) * (matrix[col][col] + matrix[col + 1][col + 1])
           - 4 * (matrix[col][col] * matrix[col + 1][col + 1] - matrix[col][col + 1] * matrix[col + 1][col]);
       if (D < 0) {
@@ -118,12 +117,12 @@ std::vector<std::complex<double>> Eigenvalues(Matrix &matrix) {
 }
 
 //Check to stop QR algorithm
-bool CheckEigenValues(std::vector<std::complex<double>> &cur, std::vector<std::complex<double>> &next) {
+bool CheckEigenValues(std::vector<Complex> &cur, std::vector<Complex> &next) {
   if (next.size() != cur.size()) {
     return false;
   }
   for (size_t i = 0; i < cur.size(); i++) {
-    if (abs(cur[i] - next[i]) >= DIF_EPS) {
+    if (abs(cur[i] - next[i]) >= DIF_EPS_QR) {
       return false;
     }
   }
@@ -131,8 +130,8 @@ bool CheckEigenValues(std::vector<std::complex<double>> &cur, std::vector<std::c
 }
 
 //Eigen vector = Q * Hessenberg eigen vector
-std::vector<std::complex<double>> EigenVector(const std::vector<std::vector<std::complex<double>>> &matrix,
-                                              const std::vector<std::complex<double>> &vector) {
+std::vector<std::complex<double>> EigenVector(const std::vector<std::vector<Complex>> &matrix,
+                                              const std::vector<Complex> &vector) {
   std::vector<std::complex<double>> temp(vector.size(), 0);
   for (size_t row = 0; row < matrix.size(); row++) {
     for (size_t col = 0; col < matrix.size(); col++) {
@@ -143,13 +142,13 @@ std::vector<std::complex<double>> EigenVector(const std::vector<std::vector<std:
 }
 
 //Find eigen vector for eigenvalue
-std::map<std::complex<double>, std::vector<std::vector<std::complex<double>>>, Compare>
-EigenValuesWithEigenVector(const std::vector<std::vector<std::complex<double>>> &matrix,
-                           const std::vector<std::complex<double>> &eigen_values,
-                           const std::vector<std::vector<std::complex<double>>> &q) {
+std::map<std::complex<double>, std::vector<std::vector<Complex>>, Compare>
+EigenValuesWithEigenVector(const std::vector<std::vector<Complex>> &matrix,
+                           const std::vector<Complex> &eigen_values,
+                           const std::vector<std::vector<Complex>> &q) {
   std::map<std::complex<double>, std::vector<std::vector<std::complex<double>>>, Compare> ans{};
   for (const auto &el : eigen_values) {
-    std::complex<double> temp_el = RoundEigenValue(el);
+    Complex temp_el = RoundEigenValue(el);
     if (ans.find(temp_el) == ans.end()) {
       std::vector<std::vector<std::complex<double>>> gauss_matrix = matrix;
 
@@ -171,12 +170,12 @@ EigenValuesWithEigenVector(const std::vector<std::vector<std::complex<double>>> 
         if (row != pos) {
           std::swap(gauss_matrix[row], gauss_matrix[pos]);
         }
-        if (abs(gauss_matrix[row][col]) < EPS) {
+        if (abs(gauss_matrix[row][col]) < EPS_QR) {
           independent_val.push_back(col);
           continue;
         }
 
-        std::complex<double> diff = gauss_matrix[row][col];
+        Complex diff = gauss_matrix[row][col];
         for (size_t cur_col = col; cur_col < gauss_matrix.size(); cur_col++) {
           gauss_matrix[row][cur_col] /= diff;
         }
@@ -190,9 +189,9 @@ EigenValuesWithEigenVector(const std::vector<std::vector<std::complex<double>>> 
       }
 
       for (int row = (int) gauss_matrix.size() - 1; row > 0; row--) {
-        if (abs(gauss_matrix[row][row]) >= EPS) {
+        if (abs(gauss_matrix[row][row]) >= EPS_QR) {
           for (int cur_row = row - 1; cur_row >= 0; cur_row--) {
-            std::complex<double> dif = gauss_matrix[cur_row][row];
+            Complex dif = gauss_matrix[cur_row][row];
             gauss_matrix[cur_row][row] = 0;
             for (const auto &pos : independent_val) {
               gauss_matrix[cur_row][pos] -= dif * gauss_matrix[row][pos];
@@ -203,12 +202,12 @@ EigenValuesWithEigenVector(const std::vector<std::vector<std::complex<double>>> 
 
       //Create eigen vectors
       for (const auto &pos : independent_val) {
-        std::vector<std::complex<double>> eigen_vector;
+        std::vector<Complex> eigen_vector;
         for (size_t row = 0; row < matrix.size(); row++) {
           if (row == pos) {
             eigen_vector.emplace_back(1, 0);
-          } else if ((abs(gauss_matrix[row][pos]) >= EPS &&
-              (abs(gauss_matrix[row][row]) >= EPS))) {
+          } else if ((abs(gauss_matrix[row][pos]) >= EPS_QR &&
+              (abs(gauss_matrix[row][row]) >= EPS_QR))) {
             eigen_vector.push_back(-gauss_matrix[row][pos] / gauss_matrix[row][row]);
           } else {
             eigen_vector.emplace_back(0, 0);
@@ -225,6 +224,7 @@ EigenValuesWithEigenVector(const std::vector<std::vector<std::complex<double>>> 
   return ans;
 }
 
+//QR algorithm
 void QRAlgorithm(Matrix &matrix) {
   //We need them to reconstruct eigenvectors
   std::vector<std::vector<std::complex<double>>> q = MatrixToComplex(ReductionToHessenberg(matrix));
@@ -245,8 +245,10 @@ void QRAlgorithm(Matrix &matrix) {
     new_matrix = matrix * Q;
     new_eigen_values = Eigenvalues(new_matrix);
   } while (!CheckEigenValues(new_eigen_values, cur_eigen_values));
+
   std::map<std::complex<double>, std::vector<std::vector<std::complex<double>>>,
            Compare> ans = EigenValuesWithEigenVector(hessenberg, new_eigen_values, q);
+  //Print all eigenvalue with eigenvectors (without attached vectors)
   for (const auto &el : ans) {
     std::cout << "Eigen value: " << el.first << std::endl << "Eigen vectors for this value:" << std::endl;
     for (const auto &ell : el.second) {
@@ -254,5 +256,4 @@ void QRAlgorithm(Matrix &matrix) {
     }
   }
 }
-
 #endif //CMA_LABORATORY_WORK_2__QR_ALGORITHM_H_

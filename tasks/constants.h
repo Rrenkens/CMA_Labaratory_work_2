@@ -5,14 +5,25 @@
 #include <cmath>
 #include <iostream>
 #include <complex>
+#include <random>
+#include <map>
 
-typedef std::complex<double> Base;
+typedef std::vector<std::vector<double>> Matrix;
+typedef std::vector<double> Vector;
+typedef std::complex<double> Complex;
 
-const double EPS = 1E-7;
-const double DIF_EPS = 1E-14;
+const double EPS_QR = 1E-7;
+const double DIF_EPS_QR = 1E-14;
+const double EPS = 1E-9;
 const long long ROUND_CONST_LL = 10000000;
 const double ROUND_CONST_LD = 10000000.0;
 const double PI = 3.1415926535;
+
+struct Compare {
+  bool operator ()(const Complex& lhs, const Complex& rhs) {
+    return abs(lhs) < abs(rhs);
+  }
+};
 
 template<typename T>
 std::ostream &operator<<(std::ostream &out, const std::vector<T> &data) {
@@ -51,10 +62,15 @@ std::istream &operator>>(std::istream &in, std::vector<std::vector<T>> &data) {
 
 std::ostream &operator<<(std::ostream &out, const std::complex<double> &data);
 
-void FFT(std::vector<Base> &data, bool invert);
+void FFT(std::vector<std::complex<double>> &data, bool invert);
 void Multiply(const std::vector<double> &first_pol,
               std::vector<double> &second_pol, size_t cur_size);
 
 std::complex<double> RoundEigenValue(const std::complex<double> &value);
+
+int GetRandomNum(size_t mod);
+
+int Sign(double value);
+
 
 #endif //CMA_LABORATORY_WORK_2__CONSTANTS_H_
