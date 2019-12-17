@@ -8,7 +8,8 @@ void MulBlockOfMatrix(Matrix &matrix, size_t start_row, size_t end_row,
                       const Matrix &mul_matrix, bool left, bool right) {
   Matrix temp_matrix(end_row - start_row, Vector(end_col - start_col));
   for (size_t cur_row = start_row, i = 0; cur_row < end_row; cur_row++, i++) {
-    for (size_t cur_col = start_col, j = 0; cur_col < end_col; cur_col++, j++) {
+    for (size_t cur_col = start_col, j = 0;
+         cur_col < end_col; cur_col++, j++) {
       temp_matrix[i][j] = matrix[cur_row][cur_col];
     }
   }
@@ -21,7 +22,8 @@ void MulBlockOfMatrix(Matrix &matrix, size_t start_row, size_t end_row,
   }
 
   for (size_t cur_row = start_row, i = 0; cur_row < end_row; cur_row++, i++) {
-    for (size_t cur_col = start_col, j = 0; cur_col < end_col; cur_col++, j++) {
+    for (size_t cur_col = start_col, j = 0;
+         cur_col < end_col; cur_col++, j++) {
       matrix[cur_row][cur_col] = temp_matrix[i][j];
     }
   }
@@ -40,7 +42,8 @@ Matrix ReductionToHessenberg(Matrix &matrix) {
     for (size_t row = col + 1, pos = 0; row < matrix.size(); row++, pos++) {
       w[pos] = matrix[row][col];
     }
-    w[0] = w[0] <= 0 ? w[0] - EuclideanNormOfVector(w) : w[0] + EuclideanNormOfVector(w);
+    w[0] = w[0] <= 0 ? w[0] - EuclideanNormOfVector(w) :
+           w[0] + EuclideanNormOfVector(w);
     w = VectorRotationWithEuclideanNorm(w);
 
     Matrix H(matrix.size() - col - 1, Vector(matrix.size() - col - 1, 0));
@@ -71,22 +74,31 @@ Matrix ReductionToHessenberg(Matrix &matrix) {
 }
 
 //Find QR decomposition of matrix
-Matrix QrDecompos(Matrix &matrix) {
+Matrix QrDecompos(Matrix &matrix, Matrix &q, bool is_symmetric) {
   Matrix Q = CreateEMatrix(matrix.size());
   for (int col = 0; col < (int) matrix.size() - 1; col++) {
-    if (matrix[col + 1][col] * matrix[col + 1][col] + matrix[col][col] * matrix[col][col] < DIF_EPS_QR) {
+
+    if (matrix[col + 1][col] * matrix[col + 1][col] +
+        matrix[col][col] * matrix[col][col] < DIF_EPS_QR) {
       continue;
+
     }
-    double cos = matrix[col][col]
-        / (sqrt(matrix[col + 1][col] * matrix[col + 1][col] + matrix[col][col] * matrix[col][col]));
-    double sin =
-        -matrix[col + 1][col]
-            / (sqrt(matrix[col + 1][col] * matrix[col + 1][col] + matrix[col][col] * matrix[col][col]));
+    double cos = matrix[col][col] / (sqrt(matrix[col + 1][col] *
+        matrix[col + 1][col] + matrix[col][col] * matrix[col][col]));
+    double sin = -matrix[col + 1][col] / (sqrt(matrix[col + 1][col] *
+        matrix[col + 1][col] + matrix[col][col] * matrix[col][col]));
+
     Matrix T_i = CreateMatrix(2, 2);
     T_i[0][0] = T_i[1][1] = cos;
     T_i[0][1] = sin;
     T_i[1][0] = -sin;
+
     MulBlockOfMatrix(Q, 0, matrix.size(), col, col + 2, T_i, false, true);
+
+    if (is_symmetric) {
+      MulBlockOfMatrix(q, 0, matrix.size(), col, col + 2, T_i, false, true);
+    }
+
     std::swap(T_i[0][1], T_i[1][0]);
     MulBlockOfMatrix(matrix, col, col + 2, 0, matrix.size(), T_i, true, false);
   }
@@ -100,13 +112,15 @@ std::vector<Complex> Eigenvalues(Matrix &matrix) {
     if (col + 1 != matrix.size() && fabs(matrix[col + 1][col]) >= DIF_EPS) {
       double D = (matrix[col][col] + matrix[col + 1][col + 1]) * (matrix[col][col] + matrix[col + 1][col + 1])
           - 4 * (matrix[col][col] * matrix[col + 1][col + 1] - matrix[col][col + 1] * matrix[col + 1][col]);
-      if (D < 0) {
+      if (D > EPS) {
+        return {};
+      } else if (fabs(D) < EPS) {
+        eigenvalues.emplace_back((matrix[col][col] + matrix[col + 1][col + 1]) / 2, 0);
+        eigenvalues.emplace_back((matrix[col][col] + matrix[col + 1][col + 1]) / 2, 0);
+      } else {
         D = -D;
         eigenvalues.emplace_back((matrix[col][col] + matrix[col + 1][col + 1]) / 2, -sqrt(D) / 2);
         eigenvalues.emplace_back((matrix[col][col] + matrix[col + 1][col + 1]) / 2, sqrt(D) / 2);
-      } else {
-        eigenvalues.emplace_back((matrix[col][col] + matrix[col + 1][col + 1] - sqrt(D)) / 2, 0);
-        eigenvalues.emplace_back((matrix[col][col] + matrix[col + 1][col + 1] + sqrt(D)) / 2, 0);
       }
       col++;
     } else {
@@ -118,7 +132,7 @@ std::vector<Complex> Eigenvalues(Matrix &matrix) {
 
 //Check to stop QR algorithm
 bool CheckEigenValues(std::vector<Complex> &cur, std::vector<Complex> &next) {
-  if (next.size() != cur.size()) {
+  if (next.size() != cur.size() || next.empty() || cur.empty()) {
     return false;
   }
   for (size_t i = 0; i < cur.size(); i++) {
@@ -130,8 +144,9 @@ bool CheckEigenValues(std::vector<Complex> &cur, std::vector<Complex> &next) {
 }
 
 //Eigen vector = Q * Hessenberg eigen vector
-std::vector<std::complex<double>> EigenVector(const std::vector<std::vector<Complex>> &matrix,
-                                              const std::vector<Complex> &vector) {
+std::vector<std::complex<double>> EigenVector(
+    const std::vector<std::vector<Complex>> &matrix,
+    const std::vector<Complex> &vector) {
   std::vector<std::complex<double>> temp(vector.size(), 0);
   for (size_t row = 0; row < matrix.size(); row++) {
     for (size_t col = 0; col < matrix.size(); col++) {
@@ -141,12 +156,13 @@ std::vector<std::complex<double>> EigenVector(const std::vector<std::vector<Comp
   return temp;
 }
 
-//Find eigen vector for eigenvalue
+//Find eigen vector for eigenvalue using Gauss
 std::map<std::complex<double>, std::vector<std::vector<Complex>>, Compare>
 EigenValuesWithEigenVector(const std::vector<std::vector<Complex>> &matrix,
                            const std::vector<Complex> &eigen_values,
                            const std::vector<std::vector<Complex>> &q) {
-  std::map<std::complex<double>, std::vector<std::vector<std::complex<double>>>, Compare> ans;
+  std::map<std::complex<double>,
+           std::vector<std::vector<std::complex<double>>>, Compare> ans;
   for (const auto &el : eigen_values) {
     Complex temp_el = RoundEigenValue(el);
     if (ans.find(temp_el) == ans.end()) {
@@ -159,10 +175,12 @@ EigenValuesWithEigenVector(const std::vector<std::vector<Complex>> &matrix,
       std::vector<int> independent_val;
 
       //Gauss
-      for (size_t row = 0, col = 0; row < gauss_matrix.size() && col < gauss_matrix.size(); col++) {
+      for (size_t row = 0, col = 0; row < gauss_matrix.size() &&
+          col < gauss_matrix.size(); col++) {
         size_t pos = row;
         //Choose main element
-        for (size_t cur_row = row + 1; cur_row < std::min(col + 2, gauss_matrix.size()); cur_row++) {
+        for (size_t cur_row = row + 1;
+             cur_row < std::min(col + 2, gauss_matrix.size()); cur_row++) {
           if (abs(gauss_matrix[cur_row][col]) > abs(gauss_matrix[pos][col])) {
             pos = cur_row;
           }
@@ -181,8 +199,10 @@ EigenValuesWithEigenVector(const std::vector<std::vector<Complex>> &matrix,
         }
         if (row + 1 != gauss_matrix.size()) {
           diff = gauss_matrix[row + 1][col];
-          for (size_t cur_col = col; cur_col < gauss_matrix.size(); cur_col++) {
-            gauss_matrix[row + 1][cur_col] -= diff * gauss_matrix[row][cur_col];
+          for (size_t cur_col = col;
+               cur_col < gauss_matrix.size(); cur_col++) {
+            gauss_matrix[row + 1][cur_col] -=
+                diff * gauss_matrix[row][cur_col];
           }
         }
         row++;
@@ -224,6 +244,7 @@ EigenValuesWithEigenVector(const std::vector<std::vector<Complex>> &matrix,
   return ans;
 }
 
+//Check for the symmetry of the matrix
 bool CheckForSymmetric(const Matrix &matrix) {
   for (size_t row = 0; row < matrix.size(); row++) {
     for (size_t col = row + 1; col < matrix.size(); col++) {
@@ -238,9 +259,12 @@ bool CheckForSymmetric(const Matrix &matrix) {
 //QR algorithm
 void QRAlgorithm(Matrix &matrix) {
   //We need them to reconstruct eigenvectors
+  const std::vector<std::vector<Complex>> copy_matrix =
+      MatrixToComplex(matrix);
   bool is_symmetric = CheckForSymmetric(matrix);
-  std::vector<std::vector<std::complex<double>>> q = MatrixToComplex(ReductionToHessenberg(matrix));
-  std::vector<std::vector<std::complex<double>>> hessenberg = MatrixToComplex(matrix);
+  Matrix q = ReductionToHessenberg(matrix);
+  std::vector<std::vector<std::complex<double>>> hessenberg
+      = MatrixToComplex(matrix);
 
   //new_matrix matrix on the last QR iteration,
   //new_eigen_values eigen values of this matrix
@@ -253,29 +277,41 @@ void QRAlgorithm(Matrix &matrix) {
   do {
     cur_matrix = matrix = new_matrix;
     cur_eigen_values = new_eigen_values;
-    Matrix Q = QrDecompos(matrix);
+    Matrix Q = QrDecompos(matrix, q, is_symmetric);
     new_matrix = matrix * Q;
     new_eigen_values = Eigenvalues(new_matrix);
   } while (!CheckEigenValues(new_eigen_values, cur_eigen_values));
 
+  std::map<std::complex<double>,
+           std::vector<std::vector<std::complex<double>>>, Compare> ans;
 
-  std::map<std::complex<double>, std::vector<std::vector<std::complex<double>>>,
-           Compare> ans;
-
+  //Search for eigenvectors.
+  //If this matrix was symmetric, then we search
+  //eigenvectors using the qr algorithm
   if (!is_symmetric) {
-    ans = EigenValuesWithEigenVector(hessenberg, new_eigen_values, q);
+    ans = EigenValuesWithEigenVector(hessenberg,
+                                     new_eigen_values, MatrixToComplex(q));
   } else {
-    TransposeMatrix(new_matrix);
-    for (size_t el = 0; el < new_eigen_values.size(); el++) {
-      ans[RoundEigenValue(el)].push_back(VectorToComplex(new_matrix[el]));
+    q = TransposeMatrix(q);
+    for (size_t i = 0; i < new_eigen_values.size(); i++) {
+      ans[RoundEigenValue(new_eigen_values[i])].push_back(
+          VectorRotationWithCubNorm(VectorToComplex(q[i])));
     }
   }
 
+  //Print only eigenvalues
+//  for (const auto &el : ans) {
+//    std::cout << el.first << std::endl;
+//  }
+
   //Print all eigenvalue with eigenvectors (without attached vectors)
-  for (const auto &el : ans) {
-    std::cout << "Eigen value: " << el.first << std::endl << "Eigen vectors for this value:" << std::endl;
-    for (const auto &ell : el.second) {
-      std::cout << ell << std::endl;
+  for (const auto &eigenvalue : ans) {
+    std::cout << "Eigen value: " << eigenvalue.first << std::endl
+              << "Eigen vectors for this value:" << std::endl;
+    for (const auto &eigenvectors: eigenvalue.second) {
+      std::cout << eigenvectors << std::endl;
+//      std::cout << copy_matrix * eigenvectors << std::endl;
+//      std::cout << eigenvalue.first * eigenvectors << std::endl;
     }
   }
 }
