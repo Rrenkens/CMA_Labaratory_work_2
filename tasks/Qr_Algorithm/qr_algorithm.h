@@ -144,10 +144,10 @@ bool CheckEigenValues(std::vector<Complex> &cur, std::vector<Complex> &next) {
 }
 
 //Eigen vector = Q * Hessenberg eigen vector
-std::vector<std::complex<double>> EigenVector(
+std::vector<Complex> EigenVector(
     const std::vector<std::vector<Complex>> &matrix,
     const std::vector<Complex> &vector) {
-  std::vector<std::complex<double>> temp(vector.size(), 0);
+  std::vector<Complex> temp(vector.size(), 0);
   for (size_t row = 0; row < matrix.size(); row++) {
     for (size_t col = 0; col < matrix.size(); col++) {
       temp[row] += matrix[row][col] * vector[col];
@@ -157,16 +157,16 @@ std::vector<std::complex<double>> EigenVector(
 }
 
 //Find eigen vector for eigenvalue using Gauss
-std::map<std::complex<double>, std::vector<std::vector<Complex>>, Compare>
+std::map<Complex, std::vector<std::vector<Complex>>, Compare>
 EigenValuesWithEigenVector(const std::vector<std::vector<Complex>> &matrix,
                            const std::vector<Complex> &eigen_values,
                            const std::vector<std::vector<Complex>> &q) {
-  std::map<std::complex<double>,
-           std::vector<std::vector<std::complex<double>>>, Compare> ans;
+  std::map<Complex,
+           std::vector<std::vector<Complex>>, Compare> ans;
   for (const auto &el : eigen_values) {
     Complex temp_el = RoundEigenValue(el);
     if (ans.find(temp_el) == ans.end()) {
-      std::vector<std::vector<std::complex<double>>> gauss_matrix = matrix;
+      std::vector<std::vector<Complex>> gauss_matrix = matrix;
 
       // A - \lambda * E
       for (size_t row = 0; row < gauss_matrix.size(); row++) {
@@ -263,7 +263,7 @@ void QRAlgorithm(Matrix &matrix) {
       MatrixToComplex(matrix);
   bool is_symmetric = CheckForSymmetric(matrix);
   Matrix q = ReductionToHessenberg(matrix);
-  std::vector<std::vector<std::complex<double>>> hessenberg
+  std::vector<std::vector<Complex>> hessenberg
       = MatrixToComplex(matrix);
 
   //new_matrix matrix on the last QR iteration,
@@ -272,7 +272,7 @@ void QRAlgorithm(Matrix &matrix) {
   new_matrix = cur_matrix = matrix;
 
   //QR algorithm
-  std::vector<std::complex<double>> cur_eigen_values, new_eigen_values;
+  std::vector<Complex> cur_eigen_values, new_eigen_values;
   cur_eigen_values = new_eigen_values = Eigenvalues(matrix);
   do {
     cur_matrix = matrix = new_matrix;
@@ -282,8 +282,8 @@ void QRAlgorithm(Matrix &matrix) {
     new_eigen_values = Eigenvalues(new_matrix);
   } while (!CheckEigenValues(new_eigen_values, cur_eigen_values));
 
-  std::map<std::complex<double>,
-           std::vector<std::vector<std::complex<double>>>, Compare> ans;
+  std::map<Complex,
+           std::vector<std::vector<Complex>>, Compare> ans;
 
   //Search for eigenvectors.
   //If this matrix was symmetric, then we search

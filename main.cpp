@@ -6,12 +6,12 @@
 
 int main() {
   std::cout << std::fixed << std::setprecision(9);
-  Matrix matrix = CreateMatrix(20, 20);
+  Matrix matrix = CreateMatrix(10, 10);
 
   std::cin >> matrix;
 
   //PowerIteration(matrix);
   //Danilevskiy(matrix);
-  //QRAlgorithm(matrix);
+  QRAlgorithm(matrix);
   return 0;
 }
