@@ -51,7 +51,8 @@ double CalculationOfEigenvalueWithDifferentSign(const Data &data,
 
 //Calculation eigenvalue for complex case. If abs(r_den) < EPS or
 //abs(cos) > 1 we note that it certainly does not converge to a complex case.
-Complex CalculationOfComplexEigenvalue(const Data &data, size_t cur_iteration, bool &flag) {
+Complex CalculationOfComplexEigenvalue(const Data &data,
+                                       size_t cur_iteration, bool &flag) {
   size_t pos = PosOfMaxElement(data.v_i[(cur_iteration + 2) % 4],
                                data.norm_of_v_i[(cur_iteration + 2) % 4]);
   double r_num = data.v_i[cur_iteration % 4][pos] *
@@ -117,7 +118,8 @@ void PowerIteration(Matrix &matrix) {
   Vector initial_vector;
 
   while (true) {
-    //We skip the first 4 iterations, because 4 vectors are needed to calculate the complex case
+    //We skip the first 4 iterations, because 4 vectors
+    //are needed to calculate the complex case
     if (cur_iteration == 0) {
       initial_vector = CreateRandomInitialApproach(matrix.size());
       data.v_i[cur_iteration % 4] = initial_vector;
@@ -125,20 +127,25 @@ void PowerIteration(Matrix &matrix) {
       data.v_i[cur_iteration % 4] = matrix * data.u_i[(cur_iteration + 3) % 4];
     }
 
-    data.norm_of_v_i[cur_iteration % 4] = CubNormOfVector(data.v_i[cur_iteration % 4]);
+    data.norm_of_v_i[cur_iteration % 4] =
+        CubNormOfVector(data.v_i[cur_iteration % 4]);
 
     if (cur_iteration >= 4) {
       lambda_1 = CalculationOfSimpleEigenvalue(data, cur_iteration);
       lambda_2 = CalculationOfEigenvalueWithDifferentSign(data, cur_iteration);
-      lambda_31 = CalculationOfComplexEigenvalue(data, cur_iteration, complex_flag);
+      lambda_31 = CalculationOfComplexEigenvalue(data,
+                                                 cur_iteration, complex_flag);
 
       //We calculate the eigenvectors for the resulting eigenvalues.
       //Then we find the vector diff = AU - lambda * U.
       //If all diff coordinates < EPS, this means case has converged.
-      diff_1 = matrix * data.u_i[(cur_iteration + 3) % 4] - lambda_1 * data.u_i[(cur_iteration + 3) % 4];
+      diff_1 = matrix * data.u_i[(cur_iteration + 3) % 4] -
+          lambda_1 * data.u_i[(cur_iteration + 3) % 4];
 
-      u_21 = data.v_i[cur_iteration % 4] + lambda_2 * data.u_i[(cur_iteration + 3) % 4];
-      u_22 = data.v_i[cur_iteration % 4] - lambda_2 * data.u_i[(cur_iteration + 3) % 4];
+      u_21 = data.v_i[cur_iteration % 4] +
+          lambda_2 * data.u_i[(cur_iteration + 3) % 4];
+      u_22 = data.v_i[cur_iteration % 4] -
+          lambda_2 * data.u_i[(cur_iteration + 3) % 4];
       diff_21 = matrix * u_21 - lambda_2 * u_21;
       diff_22 = matrix * u_22 + lambda_2 * u_22;
 
@@ -156,19 +163,25 @@ void PowerIteration(Matrix &matrix) {
       if (Check(diff_1) &&
           CubNormOfVector(data.u_i[(cur_iteration + 3) % 4]) >= DIF_EPS) {
 
-        std::cout << matrix * data.u_i[(cur_iteration + 3) % 4] << std::endl;
-        std::cout << lambda_1 * data.u_i[(cur_iteration + 3) % 4] << std::endl;
+//        std::cout << matrix * data.u_i[(cur_iteration + 3) % 4] << std::endl;
+//        std::cout << lambda_1 * data.u_i[(cur_iteration + 3) % 4] << std::endl;
 
         std::cout << "Count of iteration = " << cur_iteration << std::endl;
         std::cout << "Case with simple eigenvalue" << std::endl;
         std::cout << "Eigen value = " << lambda_1 << std::endl <<
                   "Eigen vector for this eigenvalue:" << std::endl <<
-                  VectorRotationWithCubNorm(data.u_i[(cur_iteration + 3) % 4]) << std::endl;
+                  VectorRotationWithCubNorm(data.u_i[(cur_iteration + 3) % 4])
+                  << std::endl;
 
         break;
       } else if (Check(diff_21) && Check(diff_22) &&
           CubNormOfVector(u_21) >= DIF_EPS &&
           CubNormOfVector(u_22) >= DIF_EPS) {
+
+//        std::cout << matrix * u_21 << std::endl;
+//        std::cout << lambda_2 * u_21 << std::endl;
+//        std::cout << matrix * u_22 << std::endl;
+//        std::cout << -lambda_2 * u_22 << std::endl;
 
         std::cout << "Count of iteration = " << cur_iteration << std::endl;
         std::cout << "Case with eigenvalue with different sign" << std::endl;
@@ -186,6 +199,11 @@ void PowerIteration(Matrix &matrix) {
           abs(CubNormOfVector(u_31)) >= DIF_EPS &&
           abs(CubNormOfVector(u_32)) >= DIF_EPS) {
 
+//        std::cout << complex_matrix * u_31 << std::endl;
+//        std::cout << lambda_31 * u_31 << std::endl;
+//        std::cout << complex_matrix * u_32 << std::endl;
+//        std::cout << lambda_32 * u_32 << std::endl;
+
         std::cout << "Count of iteration = " << cur_iteration << std::endl;
         std::cout << "Case with complex eigenvalue" << std::endl;
         std::cout << "Eigen value = " << lambda_31 << std::endl <<
@@ -199,12 +217,14 @@ void PowerIteration(Matrix &matrix) {
     }
 
     complex_flag = true;
-    data.u_i[cur_iteration % 4] = VectorRotationWithCubNorm(data.v_i[cur_iteration % 4]);
+    data.u_i[cur_iteration % 4] =
+        VectorRotationWithCubNorm(data.v_i[cur_iteration % 4]);
 
     //If the current vector coincides with the initial vector
     //or the number of iterations is too large, we specify a
     //different initial approximation.
-    if (cur_iteration >= 1e5 || Check(initial_vector - data.u_i[cur_iteration % 4])) {
+    if (cur_iteration >= 1e5 ||
+        Check(initial_vector - data.u_i[cur_iteration % 4])) {
       cur_iteration = 0;
       continue;
     }
