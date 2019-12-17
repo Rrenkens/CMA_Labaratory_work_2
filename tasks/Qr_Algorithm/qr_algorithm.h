@@ -258,6 +258,9 @@ bool CheckForSymmetric(const Matrix &matrix) {
 
 //QR algorithm
 void QRAlgorithm(Matrix &matrix) {
+
+  size_t count_of_iterations = 0;
+
   //We need them to reconstruct eigenvectors
   const std::vector<std::vector<Complex>> copy_matrix =
       MatrixToComplex(matrix);
@@ -275,6 +278,7 @@ void QRAlgorithm(Matrix &matrix) {
   std::vector<Complex> cur_eigen_values, new_eigen_values;
   cur_eigen_values = new_eigen_values = Eigenvalues(matrix);
   do {
+    count_of_iterations++;
     cur_matrix = matrix = new_matrix;
     cur_eigen_values = new_eigen_values;
     Matrix Q = QrDecompos(matrix, q, is_symmetric);
@@ -303,6 +307,9 @@ void QRAlgorithm(Matrix &matrix) {
 //  for (const auto &el : ans) {
 //    std::cout << el.first << std::endl;
 //  }
+
+  std::cout << "Count of iterations = "
+            << count_of_iterations << std::endl;
 
   //Print all eigenvalue with eigenvectors (without attached vectors)
   for (const auto &eigenvalue : ans) {
