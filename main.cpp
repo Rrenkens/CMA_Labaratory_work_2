@@ -1,13 +1,17 @@
 #include <iostream>
 #include "tasks/Qr_Algorithm/qr_algorithm.h"
 #include "tasks/Power_Iteration/power_iteration.h"
+#include "tasks/Danilevskiy/danilevskiy.h"
 #include <iomanip>
 
 int main() {
-  std::cout << std::fixed << std::setprecision(20);
+  std::cout << std::fixed << std::setprecision(9);
   Matrix matrix = CreateMatrix(10, 10);
+
   std::cin >> matrix;
+
   //QRAlgorithm(matrix);
   PowerIteration(matrix);
+  //Danilevskiy(matrix);
   return 0;
 }

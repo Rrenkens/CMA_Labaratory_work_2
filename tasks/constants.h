@@ -12,7 +12,7 @@ typedef std::vector<std::vector<double>> Matrix;
 typedef std::vector<double> Vector;
 typedef std::complex<double> Complex;
 
-const double EPS_QR = 1E-7;
+const double DIF_EPS = 1E-7;
 const double DIF_EPS_QR = 1E-14;
 const double EPS = 1E-9;
 const long long ROUND_CONST_LL = 10000000;
@@ -20,7 +20,7 @@ const double ROUND_CONST_LD = 10000000.0;
 const double PI = 3.1415926535;
 
 struct Compare {
-  bool operator ()(const Complex& lhs, const Complex& rhs) {
+  bool operator()(const Complex &lhs, const Complex &rhs) {
     return abs(lhs) < abs(rhs);
   }
 };
@@ -67,10 +67,9 @@ void Multiply(const std::vector<double> &first_pol,
               std::vector<double> &second_pol, size_t cur_size);
 
 std::complex<double> RoundEigenValue(const std::complex<double> &value);
-
 int GetRandomNum(size_t mod);
-
 int Sign(double value);
-
+void PrintPolynom(const Vector &polynom);
+Complex MyPow(Complex val, int n);
 
 #endif //CMA_LABORATORY_WORK_2__CONSTANTS_H_

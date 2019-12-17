@@ -24,8 +24,8 @@ void FFT(std::vector<Complex> &data, bool invert) {
   }
 }
 
-void Multiply(const std::vector<long double> &first_pol,
-              std::vector<long double> &second_pol, size_t cur_size) {
+void Multiply(const std::vector<double> &first_pol,
+              std::vector<double> &second_pol, size_t cur_size) {
   std::vector<std::complex<double>> first_fft(first_pol.begin(), first_pol.end()),
       second_fft(second_pol.begin(), second_pol.end());
   size_t n = 1;
@@ -66,4 +66,21 @@ int GetRandomNum(size_t mod) {
 
 int Sign(double value) {
   return value >= 0 ? 1 : -1;
+}
+
+void PrintPolynom(const Vector &polynom) {
+  for (size_t i = 0; i < polynom.size(); i++) {
+    std::cout << polynom[i] << "x^(" << polynom.size() - i - 1 << ")";
+    if (i + 1 != polynom.size()) {
+      std::cout << " + ";
+    }
+  }
+}
+
+Complex MyPow(Complex val, int n) {
+  Complex ans = 1;
+  for (int i = 0; i < n; i++) {
+    ans *= val;
+  }
+  return ans;
 }

@@ -70,9 +70,6 @@ T CubNormOfVector(const std::vector<T> &data) {
   for (const auto &el : data) {
     norm = std::max(fabs(el), fabs(norm));
   }
-  if (fabs(norm) < EPS) {
-    throw std::invalid_argument("Normalization of a vector with norm == 0");
-  }
   return norm;
 }
 
@@ -80,6 +77,31 @@ template<typename T>
 std::vector<T> VectorRotationWithCubNorm(const std::vector<T> &data) {
   std::vector<T> temp = data;
   T norm = CubNormOfVector(data);
+  for (auto &el : temp) {
+    el /= norm;
+  }
+  return temp;
+}
+
+template<typename T>
+T EuclideanNormOfVector(const std::vector<T> &data) {
+  if (data.empty()) {
+    throw std::invalid_argument("Normalization of empty vector");
+  }
+  T norm = {};
+  for (const auto &el : data) {
+    norm += abs(el);
+  }
+  if (fabs(norm) < EPS) {
+    throw std::invalid_argument("Normalization of a vector with norm == 0");
+  }
+  return norm;
+}
+
+template<typename T>
+std::vector<T> VectorRotationWithEuclideanNorm(const std::vector<T> &data) {
+  std::vector<T> temp = data;
+  T norm = EuclideanNormOfVector(data);
   for (auto &el : temp) {
     el /= norm;
   }

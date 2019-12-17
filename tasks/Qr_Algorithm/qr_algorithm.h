@@ -97,7 +97,7 @@ Matrix QrDecompos(Matrix &matrix) {
 std::vector<Complex> Eigenvalues(Matrix &matrix) {
   std::vector<Complex> eigenvalues;
   for (size_t col = 0; col < matrix.size(); col++) {
-    if (col + 1 != matrix.size() && fabs(matrix[col + 1][col]) >= EPS_QR) {
+    if (col + 1 != matrix.size() && fabs(matrix[col + 1][col]) >= DIF_EPS) {
       double D = (matrix[col][col] + matrix[col + 1][col + 1]) * (matrix[col][col] + matrix[col + 1][col + 1])
           - 4 * (matrix[col][col] * matrix[col + 1][col + 1] - matrix[col][col + 1] * matrix[col + 1][col]);
       if (D < 0) {
@@ -146,7 +146,7 @@ std::map<std::complex<double>, std::vector<std::vector<Complex>>, Compare>
 EigenValuesWithEigenVector(const std::vector<std::vector<Complex>> &matrix,
                            const std::vector<Complex> &eigen_values,
                            const std::vector<std::vector<Complex>> &q) {
-  std::map<std::complex<double>, std::vector<std::vector<std::complex<double>>>, Compare> ans{};
+  std::map<std::complex<double>, std::vector<std::vector<std::complex<double>>>, Compare> ans;
   for (const auto &el : eigen_values) {
     Complex temp_el = RoundEigenValue(el);
     if (ans.find(temp_el) == ans.end()) {
@@ -170,7 +170,7 @@ EigenValuesWithEigenVector(const std::vector<std::vector<Complex>> &matrix,
         if (row != pos) {
           std::swap(gauss_matrix[row], gauss_matrix[pos]);
         }
-        if (abs(gauss_matrix[row][col]) < EPS_QR) {
+        if (abs(gauss_matrix[row][col]) < DIF_EPS) {
           independent_val.push_back(col);
           continue;
         }
@@ -189,7 +189,7 @@ EigenValuesWithEigenVector(const std::vector<std::vector<Complex>> &matrix,
       }
 
       for (int row = (int) gauss_matrix.size() - 1; row > 0; row--) {
-        if (abs(gauss_matrix[row][row]) >= EPS_QR) {
+        if (abs(gauss_matrix[row][row]) >= DIF_EPS) {
           for (int cur_row = row - 1; cur_row >= 0; cur_row--) {
             Complex dif = gauss_matrix[cur_row][row];
             gauss_matrix[cur_row][row] = 0;
@@ -206,8 +206,8 @@ EigenValuesWithEigenVector(const std::vector<std::vector<Complex>> &matrix,
         for (size_t row = 0; row < matrix.size(); row++) {
           if (row == pos) {
             eigen_vector.emplace_back(1, 0);
-          } else if ((abs(gauss_matrix[row][pos]) >= EPS_QR &&
-              (abs(gauss_matrix[row][row]) >= EPS_QR))) {
+          } else if ((abs(gauss_matrix[row][pos]) >= DIF_EPS &&
+              (abs(gauss_matrix[row][row]) >= DIF_EPS))) {
             eigen_vector.push_back(-gauss_matrix[row][pos] / gauss_matrix[row][row]);
           } else {
             eigen_vector.emplace_back(0, 0);
@@ -224,9 +224,21 @@ EigenValuesWithEigenVector(const std::vector<std::vector<Complex>> &matrix,
   return ans;
 }
 
+bool CheckForSymmetric(const Matrix &matrix) {
+  for (size_t row = 0; row < matrix.size(); row++) {
+    for (size_t col = row + 1; col < matrix.size(); col++) {
+      if (fabs(matrix[row][col] - matrix[col][row]) >= EPS) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 //QR algorithm
 void QRAlgorithm(Matrix &matrix) {
   //We need them to reconstruct eigenvectors
+  bool is_symmetric = CheckForSymmetric(matrix);
   std::vector<std::vector<std::complex<double>>> q = MatrixToComplex(ReductionToHessenberg(matrix));
   std::vector<std::vector<std::complex<double>>> hessenberg = MatrixToComplex(matrix);
 
@@ -246,8 +258,19 @@ void QRAlgorithm(Matrix &matrix) {
     new_eigen_values = Eigenvalues(new_matrix);
   } while (!CheckEigenValues(new_eigen_values, cur_eigen_values));
 
+
   std::map<std::complex<double>, std::vector<std::vector<std::complex<double>>>,
-           Compare> ans = EigenValuesWithEigenVector(hessenberg, new_eigen_values, q);
+           Compare> ans;
+
+  if (!is_symmetric) {
+    ans = EigenValuesWithEigenVector(hessenberg, new_eigen_values, q);
+  } else {
+    TransposeMatrix(new_matrix);
+    for (size_t el = 0; el < new_eigen_values.size(); el++) {
+      ans[RoundEigenValue(el)].push_back(VectorToComplex(new_matrix[el]));
+    }
+  }
+
   //Print all eigenvalue with eigenvectors (without attached vectors)
   for (const auto &el : ans) {
     std::cout << "Eigen value: " << el.first << std::endl << "Eigen vectors for this value:" << std::endl;
