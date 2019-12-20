@@ -174,10 +174,11 @@ EigenValuesWithEigenVector(const std::vector<std::vector<Complex>> &matrix,
       }
       std::vector<int> independent_val;
 
-      //Gauss
+      //Forward running of Gauss algorithm
       for (size_t row = 0, col = 0; row < gauss_matrix.size() &&
           col < gauss_matrix.size(); col++) {
         size_t pos = row;
+
         //Choose main element
         for (size_t cur_row = row + 1;
              cur_row < std::min(col + 2, gauss_matrix.size()); cur_row++) {
@@ -185,9 +186,12 @@ EigenValuesWithEigenVector(const std::vector<std::vector<Complex>> &matrix,
             pos = cur_row;
           }
         }
+
         if (row != pos) {
           std::swap(gauss_matrix[row], gauss_matrix[pos]);
         }
+
+        //Declare an independent variable
         if (abs(gauss_matrix[row][col]) < DIF_EPS) {
           independent_val.push_back(col);
           continue;
@@ -208,6 +212,7 @@ EigenValuesWithEigenVector(const std::vector<std::vector<Complex>> &matrix,
         row++;
       }
 
+      //Reverse running of Gauss algorithm
       for (int row = (int) gauss_matrix.size() - 1; row > 0; row--) {
         if (abs(gauss_matrix[row][row]) >= DIF_EPS) {
           for (int cur_row = row - 1; cur_row >= 0; cur_row--) {
@@ -308,18 +313,18 @@ void QRAlgorithm(Matrix &matrix) {
 //    std::cout << el.first << std::endl;
 //  }
 
-  std::cout << "Count of iterations = "
-            << count_of_iterations << std::endl;
+//  std::cout << "Count of iterations = "
+//            << count_of_iterations << std::endl;
 
   //Print all eigenvalue with eigenvectors (without attached vectors)
-  for (const auto &eigenvalue : ans) {
-    std::cout << "Eigen value: " << eigenvalue.first << std::endl
-              << "Eigen vectors for this value:" << std::endl;
-    for (const auto &eigenvectors: eigenvalue.second) {
-      std::cout << eigenvectors << std::endl;
-//      std::cout << copy_matrix * eigenvectors << std::endl;
-//      std::cout << eigenvalue.first * eigenvectors << std::endl;
-    }
-  }
+//  for (const auto &eigenvalue : ans) {
+//    std::cout << "Eigen value: " << eigenvalue.first << std::endl
+//              << "Eigen vectors for this value:" << std::endl;
+//    for (const auto &eigenvectors: eigenvalue.second) {
+//      std::cout << eigenvectors << std::endl;
+////      std::cout << copy_matrix * eigenvectors << std::endl;
+////      std::cout << eigenvalue.first * eigenvectors << std::endl;
+//    }
+//  }
 }
 #endif //CMA_LABORATORY_WORK_2__QR_ALGORITHM_H_

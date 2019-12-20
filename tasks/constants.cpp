@@ -53,6 +53,12 @@ std::complex<double> RoundEigenValue(const std::complex<double> &value) {
       static_cast<long long> (value.imag() * ROUND_CONST_LL + 0.5) / ROUND_CONST_LD};
 }
 
+std::complex<double> RoundEigenValueD(const std::complex<double> &value) {
+  return std::complex<double>{
+      static_cast<long long> (value.real() * ROUND_CONST_LL_D + 0.5) / ROUND_CONST_LD_D,
+      static_cast<long long> (value.imag() * ROUND_CONST_LL_D + 0.5) / ROUND_CONST_LD_D};
+}
+
 std::ostream &operator<<(std::ostream &out, const std::complex<double> &data) {
   out << data.real() << " + " << data.imag() << "i";
   return out;
@@ -70,17 +76,10 @@ int Sign(double value) {
 
 void PrintPolynom(const Vector &polynom) {
   for (size_t i = 0; i < polynom.size(); i++) {
-    std::cout << polynom[i] << "x^(" << polynom.size() - i - 1 << ")";
+    std::cout << polynom[i] << "x^(" << i << ")";
     if (i + 1 != polynom.size()) {
       std::cout << " + ";
     }
   }
-}
-
-Complex MyPow(Complex val, int n) {
-  Complex ans = 1;
-  for (int i = 0; i < n; i++) {
-    ans *= val;
-  }
-  return ans;
+  std::cout << std::endl;
 }

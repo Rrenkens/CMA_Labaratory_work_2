@@ -2,23 +2,7 @@
 #define CMA_LABORATORY_WORK_2_TASKS_DANILEVSKIY_DANILEVSKIY_H_
 
 #include "../matrix.h"
-
-/*
-⠄⠄⠄⣾⣿⠿⠿⠶⠿⢿⣿⣿⣿⣿⣦⣤⣄⢀⡅⢠⣾⣛⡉⠄⠄⠄⠸⢀⣿⠄
-⠄⠄⢀⡋⣡⣴⣶⣶⡀⠄⠄⠙⢿⣿⣿⣿⣿⣿⣴⣿⣿⣿⢃⣤⣄⣀⣥⣿⣿⠄
-⠄⠄⢸⣇⠻⣿⣿⣿⣧⣀⢀⣠⡌⢻⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠿⠿⣿⣿⣿⠄
-⠄⢀⢸⣿⣷⣤⣤⣤⣬⣙⣛⢿⣿⣿⣿⣿⣿⣿⡿⣿⣿⡍⠄⠄⢀⣤⣄⠉⠋⣰
-⠄⣼⣖⣿⣿⣿⣿⣿⣿⣿⣿⣿⢿⣿⣿⣿⣿⣿⢇⣿⣿⡷⠶⠶⢿⣿⣿⠇⢀⣤
-⠘⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣽⣿⣿⣿⡇⣿⣿⣿⣿⣿⣿⣷⣶⣥⣴⣿⡗
-⢀⠈⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡟⠄
-⢸⣿⣦⣌⣛⣻⣿⣿⣧⠙⠛⠛⡭⠅⠒⠦⠭⣭⡻⣿⣿⣿⣿⣿⣿⣿⣿⡿⠃⠄
-⠘⣿⣿⣿⣿⣿⣿⣿⣿⡆⠄⠄⠄⠄⠄⠄⠄⠄⠹⠈⢋⣽⣿⣿⣿⣿⣵⣾⠃⠄
-⠄⠘⣿⣿⣿⣿⣿⣿⣿⣿⠄⣴⣿⣶⣄⠄⣴⣶⠄⢀⣾⣿⣿⣿⣿⣿⣿⠃⠄⠄
-⠄⠄⠈⠻⣿⣿⣿⣿⣿⣿⡄⢻⣿⣿⣿⠄⣿⣿⡀⣾⣿⣿⣿⣿⣛⠛⠁⠄⠄⠄
-⠄⠄⠄⠄⠈⠛⢿⣿⣿⣿⠁⠞⢿⣿⣿⡄⢿⣿⡇⣸⣿⣿⠿⠛⠁⠄⠄⠄⠄⠄
-⠄⠄⠄⠄⠄⠄⠄⠉⠻⣿⣿⣾⣦⡙⠻⣷⣾⣿⠃⠿⠋⠁⠄⠄⠄⠄⠄⢀⣠⣴
-⣿⣿⣿⣶⣶⣮⣥⣒⠲⢮⣝⡿⣿⣿⡆⣿⡿⠃⠄⠄⠄⠄⠄⠄⠄⣠⣴⣿⣿⣿
-*/
+#include "newton.h"
 
 void SwapCol(Matrix &matrix, size_t first_col, size_t second_col, size_t pos) {
   for (size_t row = 0; row <= pos; row++) {
@@ -26,7 +10,7 @@ void SwapCol(Matrix &matrix, size_t first_col, size_t second_col, size_t pos) {
   }
 }
 
-void MulMatrix(Matrix &matrix, Vector &right, Vector &left, size_t pos) {
+void MulMatrix(Matrix &matrix, const Vector &right, const Vector &left, size_t pos) {
   for (size_t row = 0; row < right.size(); row++) {
     Vector temp_vector = matrix[row];
     for (size_t col = 0; col < right.size(); col++) {
@@ -60,55 +44,55 @@ void MulSimilarity(Matrix &matrix, Vector &data, size_t pos) {
   }
 }
 
-Complex Compute(const Vector &polynom, Complex val) {
-  Complex ans = 0;
-  for (int i = 0; i < polynom.size(); i++) {
-    ans += polynom[i] * MyPow(val, static_cast<int>(polynom.size()) - i - 1);
-  }
-  return ans;
-}
-
-std::vector<Complex> DurandKerner(const Vector &polynom) {
-  if (polynom.empty()) {
+//Finding the roots of equations using Aberth method
+std::vector<Complex> FindAllRoot(Vector p) {
+  if (p.size() <= 1) {
     return {};
   }
-  std::vector<Complex> ans(polynom.size() - 1);
-  ans[0] = 1;
-  for (size_t i = 1; i < ans.size(); ++i) {
-    ans[i] = ans[i - 1] * Complex(0.4, 0.9);
+  int n = static_cast<int>(p.size()) - 1;
+  Vector d = Derivative(p);
+  std::vector<Complex> ans(n);
+  std::vector<Complex> w(n);
+  double r = fabs(n * p[0] / 2 * p[1]) + fabs(p[n - 1] / (2 * n * p[n]));
+  double theta = 2 * PI / n, c = theta / (n + 1);
+  for (size_t i = 0; i < ans.size(); ++i) {
+    ans[i] = Complex(r * cos(i * theta + c), r * sin(i * theta + c));
   }
   double norm = 1;
   while (norm > EPS) {
     norm = 0;
-    std::vector<Complex> new_ans(ans.size());
-    for (size_t i = 0; i < new_ans.size(); ++i) {
-      Complex diff = Compute(polynom, ans[i]);
-      for (size_t j = 0; j < new_ans.size(); ++j) {
+    for (size_t i = 0; i < w.size(); ++i) {
+      Complex coef = Compute(p, ans[i]) / Compute(d, ans[i]);
+      Complex sum = 0;
+      for (size_t j = 0; j < ans.size(); ++j) {
         if (j != i) {
-          diff /= (ans[i] - ans[j]);
+          sum += static_cast<Complex>(1.0) / (ans[i] - ans[j]);
         }
       }
-      new_ans[i] = ans[i] - diff;
-      norm += abs(diff);
+      w[i] = coef / (static_cast<Complex>(1) - coef * sum);
     }
-    ans = new_ans;
+    for (size_t i = 0; i < w.size(); ++i) {
+      ans[i] -= w[i];
+      norm += abs(w[i] / ans[i]);
+    }
   }
   return ans;
 }
 
+//Do so that the coefficient at x^{n} is 1
 void ChangeSign(Vector &polynom) {
-  std::reverse(polynom.begin(), polynom.end());
-  double sign = 1;
-  if (polynom.front() < 0) {
-    sign = -1;
+  if (polynom.back() > 0) {
+    return;
   }
   for (auto &el : polynom) {
-    el = sign * el;
+    el = -el;
   }
 }
 
+//Find eigenvectors of Frobenius matrix
+//y = (x^{n - 1}, x^{n - 2}, ... , x, 1)
 std::map<Complex, std::vector<std::vector<Complex>>, Compare>
-FindEigenVectorsWithFrabenius(const std::vector<std::vector<Complex>> &matrix,
+FindEigenVectorsWithFrobenius(const std::vector<std::vector<Complex>> &matrix,
                               const std::vector<Complex> &eigenvalues) {
   std::map<std::complex<double>, std::vector<std::vector<std::complex<double>>>, Compare> ans;
   for (const auto &el : eigenvalues) {
@@ -119,18 +103,19 @@ FindEigenVectorsWithFrabenius(const std::vector<std::vector<Complex>> &matrix,
         frabenius_eigen_vector[i] = MyPow(el, static_cast<int>(matrix.size()) - 1 - i);
       }
       std::vector<Complex> eigen_vector = matrix * frabenius_eigen_vector;
-      ans[el].push_back(VectorRotationWithCubNorm(eigen_vector));
+      ans[temp_el].push_back(VectorRotationWithCubNorm(eigen_vector));
     }
   }
   return ans;
 }
 
+//Find eigenvectors using Gauss algorithm
 std::map<Complex, std::vector<std::vector<Complex>>, Compare>
 FindEigenVectorsWithGauss(const std::vector<std::vector<Complex>> &matrix,
                           const std::vector<Complex> &eigenvalues) {
   std::map<std::complex<double>, std::vector<std::vector<std::complex<double>>>, Compare> ans;
   for (const auto &el : eigenvalues) {
-    Complex temp_el = RoundEigenValue(el);
+    Complex temp_el = RoundEigenValueD(el);
     if (ans.find(temp_el) == ans.end()) {
       std::vector<std::vector<std::complex<double>>> gauss_matrix = matrix;
 
@@ -140,7 +125,7 @@ FindEigenVectorsWithGauss(const std::vector<std::vector<Complex>> &matrix,
       }
       std::vector<int> independent_val;
 
-      //Gauss
+      //Forward running of Gauss algorithm
       for (size_t row = 0, col = 0; row < gauss_matrix.size() && col < gauss_matrix.size(); col++) {
         size_t pos = row;
         //Choose main element
@@ -149,10 +134,13 @@ FindEigenVectorsWithGauss(const std::vector<std::vector<Complex>> &matrix,
             pos = cur_row;
           }
         }
+
         if (row != pos) {
           std::swap(gauss_matrix[row], gauss_matrix[pos]);
         }
-        if (abs(gauss_matrix[row][col]) < DIF_EPS) {
+
+        //Declare an independent variable
+        if (abs(gauss_matrix[row][col]) < DIF_D) {
           independent_val.push_back(col);
           continue;
         }
@@ -161,17 +149,18 @@ FindEigenVectorsWithGauss(const std::vector<std::vector<Complex>> &matrix,
         for (size_t cur_col = col; cur_col < gauss_matrix.size(); cur_col++) {
           gauss_matrix[row][cur_col] /= diff;
         }
-        if (row + 1 != gauss_matrix.size()) {
-          diff = gauss_matrix[row + 1][col];
+        for (size_t cur_row = row + 1; cur_row < gauss_matrix.size(); cur_row++) {
+          diff = gauss_matrix[cur_row][col];
           for (size_t cur_col = col; cur_col < gauss_matrix.size(); cur_col++) {
-            gauss_matrix[row + 1][cur_col] -= diff * gauss_matrix[row][cur_col];
+            gauss_matrix[cur_row][cur_col] -= diff * gauss_matrix[row][cur_col];
           }
         }
         row++;
       }
 
+      //Reverse running of Gauss algorithm
       for (int row = (int) gauss_matrix.size() - 1; row > 0; row--) {
-        if (abs(gauss_matrix[row][row]) >= DIF_EPS) {
+        if (abs(gauss_matrix[row][row]) >= DIF_D) {
           for (int cur_row = row - 1; cur_row >= 0; cur_row--) {
             Complex dif = gauss_matrix[cur_row][row];
             gauss_matrix[cur_row][row] = 0;
@@ -188,8 +177,8 @@ FindEigenVectorsWithGauss(const std::vector<std::vector<Complex>> &matrix,
         for (size_t row = 0; row < matrix.size(); row++) {
           if (row == pos) {
             eigen_vector.emplace_back(1, 0);
-          } else if ((abs(gauss_matrix[row][pos]) >= DIF_EPS &&
-              (abs(gauss_matrix[row][row]) >= DIF_EPS))) {
+          } else if ((abs(gauss_matrix[row][pos]) >= DIF_D &&
+              (abs(gauss_matrix[row][row]) >= DIF_D))) {
             eigen_vector.push_back(-gauss_matrix[row][pos] / gauss_matrix[row][row]);
           } else {
             eigen_vector.emplace_back(0, 0);
@@ -201,14 +190,17 @@ FindEigenVectorsWithGauss(const std::vector<std::vector<Complex>> &matrix,
       }
     }
   }
+  return ans;
 }
 
 void Danilevskiy(Matrix &matrix) {
   Matrix copy_of_matrix = matrix;
+  std::vector<std::vector<Complex>> complex_matrix = MatrixToComplex(matrix);
   Matrix similarity_transformation_matrix = CreateEMatrix(matrix.size());
 
   std::vector<int> pos_of_frobenius_matrix_ = {static_cast<int>(matrix.size())};
 
+  //We bring to normal form of Frobenius
   for (int row = static_cast<int>(copy_of_matrix.size()) - 1; row >= 0; row--) {
     if (row - 1 < 0 || std::fabs(copy_of_matrix[row][row - 1]) < EPS) {
       bool is_need_to_divide_into_frobenius = true;
@@ -216,6 +208,7 @@ void Danilevskiy(Matrix &matrix) {
         if (std::fabs(copy_of_matrix[row][col]) >= EPS) {
           std::swap(copy_of_matrix[row - 1], copy_of_matrix[col]);
           SwapCol(copy_of_matrix, row - 1, col, row);
+          SwapCol(similarity_transformation_matrix, row - 1, col, matrix.size() - 1);
           is_need_to_divide_into_frobenius = false;
           break;
         }
@@ -236,11 +229,12 @@ void Danilevskiy(Matrix &matrix) {
     }
     MulMatrix(copy_of_matrix, similarity_transformation,
               inverse_similarity_transformation, row - 1);
-    MulSimilarity(similarity_transformation_matrix, similarity_transformation, row - 1);
+    MulMatrix(similarity_transformation_matrix, similarity_transformation, {}, row - 1);
   }
 
   std::reverse(pos_of_frobenius_matrix_.begin(), pos_of_frobenius_matrix_.end());
 
+  //We find the characteristic polynomial of the matrix
   std::vector<double> cur_polynom = {1};
   for (size_t i = 1; i < pos_of_frobenius_matrix_.size(); i++) {
     std::vector<double> temp_polynom(
@@ -254,18 +248,31 @@ void Danilevskiy(Matrix &matrix) {
 
   ChangeSign(cur_polynom);
   PrintPolynom(cur_polynom);
-  std::vector<Complex> eigenvalues = DurandKerner(cur_polynom);
+
+    std::vector<Complex> eigenvalues = VectorToComplex(FindRoot(cur_polynom));
+  //std::vector<Complex> eigenvalues = FindAllRoot(cur_polynom);
+
+  //Print only eigenvalues
+  for (const auto &el : eigenvalues) {
+    std::cout << el << std::endl;
+  }
+
   std::map<Complex, std::vector<std::vector<Complex>>, Compare> ans;
 
+  //Choose the method of searching for eigenvectors depending on whether
+  //the matrix was divided into Frobenius cells.
   if (pos_of_frobenius_matrix_.size() == 2) {
-    ans = FindEigenVectorsWithFrabenius(MatrixToComplex(similarity_transformation_matrix), eigenvalues);
+    ans = FindEigenVectorsWithFrobenius(MatrixToComplex(similarity_transformation_matrix), eigenvalues);
   } else {
     ans = FindEigenVectorsWithGauss(MatrixToComplex(matrix), eigenvalues);
   }
+
   for (const auto &el : ans) {
     std::cout << "Eigen value: " << el.first << std::endl << "Eigen vectors for this value:" << std::endl;
     for (const auto &ell : el.second) {
       std::cout << ell << std::endl;
+//      std::cout << complex_matrix * ell << std::endl;
+//      std::cout << el.first * ell << std::endl;
     }
   }
 }
