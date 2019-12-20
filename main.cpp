@@ -15,7 +15,7 @@ int main() {
 
   std::cin >> matrix;
 
-  //PowerIteration(matrix);
+  PowerIteration(matrix);
   //Danilevskiy(matrix);
   //QRAlgorithm(matrix);
   return 0;

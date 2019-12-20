@@ -1,12 +1,12 @@
 #ifndef CMA_LABORATORY_WORK_2__CONSTANTS_H_
 #define CMA_LABORATORY_WORK_2__CONSTANTS_H_
-#include <vector>
 #include <algorithm>
+#include <complex>
 #include <cmath>
 #include <iostream>
-#include <complex>
-#include <random>
 #include <map>
+#include <random>
+#include <vector>
 
 typedef std::vector<std::vector<double>> Matrix;
 typedef std::vector<double> Vector;

@@ -73,9 +73,15 @@ Matrix ReductionToHessenberg(Matrix &matrix) {
   return Q;
 }
 
+struct Pos {
+  Matrix matrix;
+  int beg_row, end_row, beg_col, end_col;
+};
+
 //Find QR decomposition of matrix
-Matrix QrDecompos(Matrix &matrix, Matrix &q, bool is_symmetric) {
-  Matrix Q = CreateEMatrix(matrix.size());
+void QrDecompos(Matrix &matrix, Matrix &q, bool is_symmetric) {
+  //Matrix Q = CreateEMatrix(matrix.size());
+  std::vector<Pos> data;
   for (int col = 0; col < (int) matrix.size() - 1; col++) {
 
     if (matrix[col + 1][col] * matrix[col + 1][col] +
@@ -93,16 +99,20 @@ Matrix QrDecompos(Matrix &matrix, Matrix &q, bool is_symmetric) {
     T_i[0][1] = sin;
     T_i[1][0] = -sin;
 
-    MulBlockOfMatrix(Q, 0, matrix.size(), col, col + 2, T_i, false, true);
+    //MulBlockOfMatrix(Q, 0, matrix.size(), col, col + 2, T_i, false, true);
 
     if (is_symmetric) {
       MulBlockOfMatrix(q, 0, matrix.size(), col, col + 2, T_i, false, true);
     }
 
+    data.push_back({T_i, 0, (int) matrix.size(), col, col + 2});
     std::swap(T_i[0][1], T_i[1][0]);
     MulBlockOfMatrix(matrix, col, col + 2, 0, matrix.size(), T_i, true, false);
   }
-  return Q;
+
+  for (const auto &el : data) {
+    MulBlockOfMatrix(matrix, el.beg_row, el.end_row, el.beg_col, el.end_col, el.matrix, false, true);
+  }
 }
 
 //Function for finding the eigenvalue of block 2x2
@@ -274,21 +284,14 @@ void QRAlgorithm(Matrix &matrix) {
   std::vector<std::vector<Complex>> hessenberg
       = MatrixToComplex(matrix);
 
-  //new_matrix matrix on the last QR iteration,
-  //new_eigen_values eigen values of this matrix
-  Matrix new_matrix, cur_matrix;
-  new_matrix = cur_matrix = matrix;
-
   //QR algorithm
   std::vector<Complex> cur_eigen_values, new_eigen_values;
   cur_eigen_values = new_eigen_values = Eigenvalues(matrix);
   do {
     count_of_iterations++;
-    cur_matrix = matrix = new_matrix;
     cur_eigen_values = new_eigen_values;
-    Matrix Q = QrDecompos(matrix, q, is_symmetric);
-    new_matrix = matrix * Q;
-    new_eigen_values = Eigenvalues(new_matrix);
+    QrDecompos(matrix, q, is_symmetric);
+    new_eigen_values = Eigenvalues(matrix);
   } while (!CheckEigenValues(new_eigen_values, cur_eigen_values));
 
   std::map<Complex,
@@ -308,23 +311,23 @@ void QRAlgorithm(Matrix &matrix) {
     }
   }
 
-  //Print only eigenvalues
+//  //Print only eigenvalues
 //  for (const auto &el : ans) {
 //    std::cout << el.first << std::endl;
 //  }
-
-//  std::cout << "Count of iterations = "
-//            << count_of_iterations << std::endl;
+//
+  std::cout << "Count of iterations = "
+            << count_of_iterations << std::endl;
 
   //Print all eigenvalue with eigenvectors (without attached vectors)
-//  for (const auto &eigenvalue : ans) {
-//    std::cout << "Eigen value: " << eigenvalue.first << std::endl
-//              << "Eigen vectors for this value:" << std::endl;
-//    for (const auto &eigenvectors: eigenvalue.second) {
-//      std::cout << eigenvectors << std::endl;
-////      std::cout << copy_matrix * eigenvectors << std::endl;
-////      std::cout << eigenvalue.first * eigenvectors << std::endl;
-//    }
-//  }
+  for (const auto &eigenvalue : ans) {
+    std::cout << "Eigen value: " << eigenvalue.first << std::endl
+              << "Eigen vectors for this value:" << std::endl;
+    for (const auto &eigenvectors: eigenvalue.second) {
+      std::cout << eigenvectors << std::endl;
+//      std::cout << copy_matrix * eigenvectors << std::endl;
+//      std::cout << eigenvalue.first * eigenvectors << std::endl;
+    }
+  }
 }
 #endif //CMA_LABORATORY_WORK_2__QR_ALGORITHM_H_
